@@ -98,6 +98,20 @@ class Institute:
         self.advertising_url = advertising_url
         self.justification_feature_enabled = justification_feature_enabled
 
+    def __str__(self):
+        return ("{" +
+                "\n   id: " +  str(self.institute_id) +
+                "\n   code: " +  str(self.institute_code) +
+                "\n   name: " +  str(self.name) +
+                "\n   URL: " +  str(self.url) +
+                "\n   city: " +  str(self.city) +
+                "\n   advertising URL: " +  str(self.advertising_url) +
+                "\n   justification feature enabled: " +  str(self.justification_feature_enabled) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
+
 class Student:
     """ Információt tárol a diákról (jegyek, név, születési dátum stb.)
     """
@@ -131,6 +145,9 @@ class Student:
 
     def __str__(self):
         return self.student_string
+
+    def __repr__(self):
+        return str(self)
 
     def refresh(self):
         """ Betölti a diák adatai a Student objektumba
@@ -197,6 +214,17 @@ class Tutelary:
         self.email = email
         self.phone_number = phone_number
 
+    def __str__(self):
+        return ("{" +
+                "\n   id: " + str(self.tutelary_id) +
+                "\n   name: " + str(self.name) +
+                "\n   e-mail: " + str(self.email) +
+                "\n   phone number: " + str(self.phone_number) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
+
 class FormTeacher:
     """ Osztályfőnök
     """
@@ -205,6 +233,17 @@ class FormTeacher:
         self.name = name
         self.email = email
         self.phone_number = phone_number
+
+    def __str__(self):
+        return ("{" +
+                "\n   id: " + str(self.teacher_id) +
+                "\n   name: " + str(self.name) +
+                "\n   e-mail: " + str(self.email) +
+                "\n   phone number: " + str(self.phone_number) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
 
 class Note:
     """ Feljegyzés
@@ -218,6 +257,21 @@ class Note:
         self.teacher = teacher
         self.date = date
         self.creating_time = creating_time
+
+    def __str__(self):
+        return ("{" +
+                "\n   id: " +  str(self.note_id) +
+                "\n   type: " +  str(self.e_type) +
+                "\n   title: " +  str(self.title) +
+                "\n   content: " +  str(self.content) +
+                "\n   seen by tutelary utc: " +  str(self.seen_by_tutelary_utc) +
+                "\n   teacher: " +  str(self.teacher) +
+                "\n   date: " +  str(self.date) +
+                #"\n   creating time: " + str(self.creating_time) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
 
 class Absence:
     """ Hiányzás
@@ -243,6 +297,31 @@ class Absence:
         self.justification_type_name = justification_type_name
         self.seen_by_tutelary_utc = seen_by_tutelary_utc
 
+    def __str__(self):
+        return ("{" +
+                "\n   id: " +  str(self.absence_id) +
+                "\n   type: " +  str(self.e_type) +
+                "\n   type name: " +  str(self.type_name) +
+                "\n   subject: " +  str(self.subject) +
+                "\n   subject category: " +  str(self.subject_category) +
+                "\n   subject category name: " +  str(self.subject_category_name) +
+                "\n   mode: " +  str(self.mode) +
+                "\n   mode name: " +  str(self.mode_name) +
+                "\n   delay time minutes: " +  str(self.delay_time_minutes) +
+                "\n   lesson start time: " +  str(self.lesson_start_time) +
+                "\n   number of lessons: " +  str(self.number_of_lessons) +
+                "\n   seen by tutelary utc: " +  str(self.seen_by_tutelary_utc) +
+                "\n   teacher: " +  str(self.teacher) +
+                "\n   justification state: " +  str(self.justification_state) +
+                "\n   justification state_name: " +  str(self.justification_state_name) +
+                "\n   justification type: " +  str(self.justification_type) +
+                "\n   justification type name: " +  str(self.justification_type_name) +
+                #"\n   creating time: " + str(self.creating_time) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
+
 class Evaluation:
     """ Jegy
     """
@@ -266,6 +345,30 @@ class Evaluation:
         self.date = date
         self.creating_time = creating_time
 
+    def __str__(self):
+        return ("{" +
+                "\n   id: " +  str(self.evaluation_id) +
+                "\n   form: " +  str(self.form) +
+                "\n   form name: " +  str(self.form_name) +
+                "\n   type: " +  str(self.e_type) +
+                "\n   type name: " +  str(self.type_name) +
+                "\n   subject: " +  str(self.subject) +
+                "\n   subject category: " +  str(self.subject_category) +
+                "\n   subject category name: " +  str(self.subject_category_name) +
+                "\n   theme: " +  str(self.theme) +
+                "\n   mode: " +  str(self.mode) +
+                "\n   weight: " +  str(self.weight) +
+                "\n   value: " +  str(self.value) +
+                "\n   number value: " +  str(self.number_value) +
+                "\n   seen by tutelary utc: " +  str(self.seen_by_tutelary_utc) +
+                "\n   teacher: " +  str(self.teacher) +
+                "\n   date: " +  str(self.date) +
+                #"\n   creating time: " + str(self.creating_time) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
+
 class Average:
     """ Átlag
     """
@@ -276,3 +379,64 @@ class Average:
         self.value = value
         self.class_value = class_value
         self.difference = difference
+
+    def __str__(self):
+        return ("{" +
+                "\n   subject: " +  str(self.subject) +
+                "\n   subject category: " +  str(self.subject_category) +
+                "\n   subject category name: " +  str(self.subject_category_name) +
+                "\n   value: " +  str(self.value) +
+                "\n   class value: " +  str(self.class_value) +
+                "\n   difference: " +  str(self.difference) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
+
+class Lesson:
+    """ Óra
+    """
+    def __init__(self, lesson_id, count, date, start_time, end_time, subject, subject_category_name, classroom, class_group, teacher, deputy_teacher, state, state_name, presence_type, presence_type_name, theme, homework, calendar_ora_type):
+        self.lesson_id = lesson_id
+        self.count = count
+        self.date = date
+        self.start_time = start_time
+        self.end_time = end_time
+        self.subject = subject
+        self.subject_category_name = subject_category_name
+        self.classroom = classroom
+        self.class_group = class_group
+        self.teacher = teacher
+        self.deputy_teacher = deputy_teacher
+        self.state = state
+        self.state_name = state_name
+        self.presence_type = presence_type
+        self.presence_type_name = presence_type_name
+        self.theme = theme
+        self.homework = homework
+        self.calendar_ora_type = calendar_ora_type
+
+    def __str__(self):
+        return ("{" +
+                "\n   id: " +  str(self.lesson_id) +
+                "\n   count: " +  str(self.count) +
+                "\n   date: " +  str(self.date) +
+                "\n   start time: " +  str(self.start_time) +
+                "\n   end_time: " +  str(self.end_time) +
+                "\n   subject: " +  str(self.subject) +
+                "\n   subject category name: " +  str(self.subject_category_name) +
+                "\n   classroom: " +  str(self.classroom) +
+                "\n   class group: " +  str(self.class_group) +
+                "\n   teacher: " +  str(self.teacher) +
+                "\n   deputy teacher: " +  str(self.deputy_teacher) +
+                "\n   state: " +  str(self.state) +
+                "\n   state name: " +  str(self.state_name) +
+                "\n   presence type: " +  str(self.presence_type) +
+                "\n   presence type name: " +  str(self.presence_type_name) +
+                "\n   theme: " +  str(self.theme) +
+                "\n   homework: " +  str(self.homework) +
+                "\n   calendar ora type: " +  str(self.calendar_ora_type) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
