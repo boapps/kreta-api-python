@@ -14,6 +14,29 @@ class KretaApi:
         :param school_code: iskola kódja
         """
 
+    def get_api(self, institute_code, bearer, request):
+        return requests.get("https://" + institute_code +
+                            ".e-kreta.hu/mapi/api/v1/" + request,
+                            headers={"Authorization": "Bearer " + bearer}).text
+
+    def get_homework_student(self, institute_code, bearer, homework_id):
+        return self.get_api(institute_code, bearer, "HaziFeladat/TanuloHaziFeladatLista/" +
+                            str(homework_id))
+
+    def get_homework_teacher(self, institute_code, bearer, homework_id):
+        return self.get_api(institute_code, bearer, "HaziFeladat/TanarHaziFeladat/" +
+                            str(homework_id))
+
+    def get_events(self, institute_code, bearer, from_date="null", to_date="null"):
+        return self.get_api(institute_code, bearer, "Event?" +
+                            "fromDate=" + from_date +
+                            "&toDate" + to_date)
+
+    def get_lessons(self, institute_code, bearer, from_date="null", to_date="null"):
+        return self.get_api(institute_code, bearer, "Lesson?" +
+                            "fromDate=" + from_date +
+                            "&toDate=" + to_date)
+
     def get_schools_json(self):
         """ lekéri a Krétás iskolákat
         """
@@ -51,11 +74,12 @@ class KretaApi:
 
         return Bearer(access_token, token_type, expires_in, refresh_token)
 
-    def get_student(self, institute_code, bearer):
+    def get_student(self, institute_code, bearer, from_date="null", to_date="null"):
         """ lekéri a tanuló adatait
         """
-        return requests.get("https://" + institute_code + ".e-kreta.hu/mapi/api/v1/Student",
-                            headers={"Authorization": "Bearer " + bearer}).text
+        return self.get_api(institute_code, bearer, "Student?" +
+                            "fromDate=" + from_date +
+                            "&toDate=" + to_date)
 
 class Bearer:
     """ Bearer
@@ -73,6 +97,17 @@ class Bearer:
         self.token_type = token_type
         self.expires_in = expires_in
         self.refresh_token = refresh_token
+
+    def __str__(self):
+        return ("{" +
+                "\n   access token: " +  str(self.access_token) +
+                "\n   token type: " +  str(self.token_type) +
+                "\n   expires in: " +  str(self.expires_in) +
+                "\n   refresh token: " +  str(self.refresh_token) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
 
 class Institute:
     """ Iskola
@@ -112,6 +147,26 @@ class Institute:
     def __repr__(self):
         return str(self)
 
+class Event:
+    """ Bejegyzés
+    """
+    def __init__(self, event_id, date, content, seen_by_tutelary):
+        self.event_id = event_id
+        self.date = date
+        self.content = content
+        self.seen_by_tutelary = seen_by_tutelary
+
+    def __str__(self):
+        return ("{" +
+                "\n   id: " +  str(self.event_id) +
+                "\n   date: " +  str(self.date) +
+                "\n   content: " +  str(self.content) +
+                "\n   seen by tutelary: " +  str(self.seen_by_tutelary) +
+                "\n}")
+
+    def __repr__(self):
+        return str(self)
+
 class Student:
     """ Információt tárol a diákról (jegyek, név, születési dátum stb.)
     """
@@ -142,6 +197,39 @@ class Student:
         self.note_list = list()
         self.form_teacher = None
         self.tutelary_list = list()
+        self.bearer = None
+        self.events = list()
+        self.lessons = list()
+
+    def refresh_bearer(self):
+        bearer_json = KretaApi().get_bearer_json(self.institute_code, self.username, self.password)
+        self.bearer = KretaApi().get_bearer(bearer_json)
+
+    def refresh_events(self, from_date="null", to_date="null"):
+        event_string = KretaApi().get_events(self.institute_code, self.bearer.access_token,
+                                             from_date, to_date)
+        event_json = json.loads(event_string)
+
+        self.events.clear()
+        for event in event_json:
+            event_item = Event(event["EventId"], event["Date"], event["Content"],
+                               event["SeenByTutelaryUTC"])
+            self.events.append(event_item)
+
+    def refresh_lessons(self, from_date, to_date):
+        lesson_string = KretaApi().get_lessons(self.institute_code, self.bearer.access_token,
+                                               from_date, to_date)
+        lesson_json = json.loads(lesson_string)
+
+        self.lessons.clear()
+        for l in lesson_json:
+            l_item = Lesson(l["LessonId"], l["CalendarOraType"], l["Count"], l["Date"],
+                            l["StartTime"], l["EndTime"], l["Subject"], l["SubjectCategory"],
+                            l["SubjectCategoryName"], l["ClassRoom"], l["ClassGroup"],
+                            l["Teacher"], l["DeputyTeacher"], l["State"], l["StateName"],
+                            l["PresenceType"], l["PresenceTypeName"], l["TeacherHomeworkId"],
+                            l["IsTanuloHaziFeladatEnabled"], l["Theme"], l["Homework"])
+            self.lessons.append(l_item)
 
     def __str__(self):
         return self.student_string
@@ -149,14 +237,13 @@ class Student:
     def __repr__(self):
         return str(self)
 
-    def refresh(self):
+    def refresh_student(self, from_date="null", to_date="null"):
         """ Betölti a diák adatai a Student objektumba
+        :param from_date: ettől a dátumtól kezdődően mutasson jegyeket, hiányzást és feljegyzést ("Date")
+        :param to_date: eddig a dátumig bezárólag mutasson jegyeket, hiányzást és feljegyzést ("Date")
         """
-        bearer_json = KretaApi().get_bearer_json(self.institute_code, self.username, self.password)
-        bearer = KretaApi().get_bearer(bearer_json)
-
-        self.student_string = KretaApi().get_student(self.institute_code, bearer.access_token)
-        print(self.student_string[0:5000])
+        self.student_string = KretaApi().get_student(self.institute_code, self.bearer.access_token,
+                                                     from_date, to_date)
 
         student_json = json.loads(self.student_string)
         self.name = student_json["Name"]
@@ -165,10 +252,12 @@ class Student:
         self.name_of_birth = student_json["NameOfBirth"]
         self.place_of_birth = student_json["PlaceOfBirth"]
         self.mothers_name = student_json["MothersName"]
+        self.address_list.clear()
         for address in student_json["AddressDataList"]:
             self.address_list.append(address)
         self.date_of_birth_utc = student_json["DateOfBirthUtc"]
         self.institute_name = student_json["InstituteName"]
+        self.evaluation_list.clear()
         for evaluation in student_json["Evaluations"]:
             e_item = Evaluation(evaluation["EvaluationId"], evaluation["Form"],
                                 evaluation["FormName"], evaluation["Type"], evaluation["TypeName"],
@@ -179,10 +268,12 @@ class Student:
                                 evaluation["Teacher"], evaluation["Date"],
                                 evaluation["CreatingTime"])
             self.evaluation_list.append(e_item)
+        self.average_list.clear()
         for avr in student_json["SubjectAverages"]:
             average = Average(avr["Subject"], avr["SubjectCategory"], avr["SubjectCategoryName"],
                               avr["Value"], avr["ClassValue"], avr["Difference"])
             self.average_list.append(average)
+        self.absence_list.clear()
         for absnc in student_json["Absences"]:
             absence = Absence(absnc["AbsenceId"], absnc["Type"], absnc["TypeName"], absnc["Mode"],
                               absnc["ModeName"], absnc["Subject"], absnc["SubjectCategory"],
@@ -192,6 +283,7 @@ class Student:
                               absnc["JustificationStateName"], absnc["JustificationType"],
                               absnc["JustificationTypeName"], absnc["SeenByTutelaryUTC"])
             self.absence_list.append(absence)
+        self.note_list.clear()
         for note in student_json["Notes"]:
             n_item = Note(note["NoteId"], note["Type"], note["Title"], note["Content"],
                           note["SeenByTutelaryUTC"], note["Teacher"], note["Date"],
@@ -201,6 +293,7 @@ class Student:
                                         student_json["FormTeacher"]["Name"],
                                         student_json["FormTeacher"]["Email"],
                                         student_json["FormTeacher"]["PhoneNumber"])
+        self.tutelary_list.clear()
         for tut in student_json["Tutelaries"]:
             tutelary = Tutelary(tut["TutelaryId"], tut["Name"], tut["Email"], tut["PhoneNumber"])
             self.tutelary_list.append(tutelary)
@@ -396,13 +489,15 @@ class Average:
 class Lesson:
     """ Óra
     """
-    def __init__(self, lesson_id, count, date, start_time, end_time, subject, subject_category_name, classroom, class_group, teacher, deputy_teacher, state, state_name, presence_type, presence_type_name, theme, homework, calendar_ora_type):
+    def __init__(self, lesson_id, calendar_ora_type, count, date, start_time, end_time, subject, subject_category, subject_category_name, classroom, class_group, teacher, deputy_teacher, state, state_name, presence_type, presence_type_name, teacher_homework_id, is_tanulo_hazi_feladat_enabled, theme, homework):
         self.lesson_id = lesson_id
+        self.calendar_ora_type = calendar_ora_type
         self.count = count
         self.date = date
         self.start_time = start_time
         self.end_time = end_time
         self.subject = subject
+        self.subject_category = subject_category
         self.subject_category_name = subject_category_name
         self.classroom = classroom
         self.class_group = class_group
@@ -412,18 +507,21 @@ class Lesson:
         self.state_name = state_name
         self.presence_type = presence_type
         self.presence_type_name = presence_type_name
+        self.teacher_homework_id = teacher_homework_id
+        self.is_tanulo_hazi_feladat_enabled = is_tanulo_hazi_feladat_enabled
         self.theme = theme
         self.homework = homework
-        self.calendar_ora_type = calendar_ora_type
 
     def __str__(self):
         return ("{" +
                 "\n   id: " +  str(self.lesson_id) +
+                "\n   calendar ora type: " +  str(self.calendar_ora_type) +
                 "\n   count: " +  str(self.count) +
                 "\n   date: " +  str(self.date) +
                 "\n   start time: " +  str(self.start_time) +
                 "\n   end_time: " +  str(self.end_time) +
                 "\n   subject: " +  str(self.subject) +
+                "\n   subject category: " +  str(self.subject_category) +
                 "\n   subject category name: " +  str(self.subject_category_name) +
                 "\n   classroom: " +  str(self.classroom) +
                 "\n   class group: " +  str(self.class_group) +
@@ -433,9 +531,10 @@ class Lesson:
                 "\n   state name: " +  str(self.state_name) +
                 "\n   presence type: " +  str(self.presence_type) +
                 "\n   presence type name: " +  str(self.presence_type_name) +
+                "\n   teacher homework id: " +  str(self.teacher_homework_id) +
+                "\n   tanulo hazi feladat enabled: " +  str(self.is_tanulo_hazi_feladat_enabled) +
                 "\n   theme: " +  str(self.theme) +
                 "\n   homework: " +  str(self.homework) +
-                "\n   calendar ora type: " +  str(self.calendar_ora_type) +
                 "\n}")
 
     def __repr__(self):
